@@ -1,2 +1,0 @@
-# Meus-scripts
-.com7
