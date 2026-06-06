@@ -328,7 +328,6 @@ CreateStatDisplay(StatusPage, "Fragmentos", function() return tostring(LocalPlay
 CreateFluentHeader(FarmPage, "Fazendas Automáticas Legítimas")
 
 CreateFluentButton(FarmPage, "🚀 Lançar AUTO FARM REAL (Auto Level)", function()
-    MainFrame.Visible = false
     IniciarAutoFarmReal()
 end)
 
@@ -353,7 +352,7 @@ CreateFluentButton(FarmPage, "Auto Coletar Baús (Usa Tween)", function()
 end)
 
 -- ==========================================
--- 3. CONTEÚDO DA ABA: COMBATE (FAST ATTACK REFORMADO!)
+-- 3. CONTEÚDO DA ABA: COMBATE
 -- ==========================================
 CreateFluentHeader(CombatPage, "Melhorias de Combate")
 
@@ -362,25 +361,19 @@ CreateFluentButton(CombatPage, "⚡ FAST ATTACK MÁXIMO (Segure a Arma)", functi
     _G.FastAttack = not _G.FastAttack
     
     if _G.FastAttack then
-        -- Cria um loop super rápido ignorando as limitações do Roblox
         task.spawn(function()
             local combatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-            local combatRegistration = require(LocalPlayer.PlayerScripts.CombatFramework.CombatReg)
             
             while _G.FastAttack do
-                task.wait() -- Executa a cada frame disponível do celular
+                task.wait()
                 pcall(function()
                     local character = LocalPlayer.Character
-                    -- Só ataca se você estiver segurando um soco, espada ou fruta ativa
                     local currentTool = character and character:FindFirstChildOfClass("Tool")
                     
                     if currentTool then
-                        -- Envia pacotes falsos de clique direto para os servidores remotos do Blox Fruits
-                        -- Isso remove as animações lentas e bate o equivalente a 30 cliques por segundo
                         ReplicatedStorage.Remotes.Validator:FireServer(math.random(-9999, 9999))
                         ReplicatedStorage.Remotes.CommF_:InvokeServer("Attack", currentTool)
                         
-                        -- Força o sistema interno de hits a registrar danos extras
                         local activeController = combatFramework.activeController
                         if activeController and activeController.equippedWeapon then
                             activeController:attack()
@@ -414,7 +407,7 @@ CreateFluentButton(CombatPage, "Ativar/Desativar Modo Voar (Fly)", function()
 end)
 
 -- ==========================================
--- 4. CONTEÚDO DA ABA: TELEPORTES
+-- 4. CONTEÚDO DA ABA: TELEPORTES (CORRIGIDO!)
 -- ==========================================
 CreateFluentHeader(TeleportPage, "Primeiro Mar (Sea 1) - Movimento Seguro")
 
@@ -427,7 +420,8 @@ CreateFluentButton(TeleportPage, "Voar até Ilha dos Macacos (Jungle)", function
 end)
 
 CreateFluentButton(TeleportPage, "Voar até o Deserto (Desert)", function()
-    TweenTo(CFrame.new(1095, 17, 1424))
+    -- CORREÇÃO: Coordenada real corrigida para o Deserto Verdadeiro!
+    TweenTo(CFrame.new(910, 15, 4295))
 end)
 
 CreateFluentButton(TeleportPage, "Voar até Vila de Piratas (Pirate Village)", function()
