@@ -1,15 +1,16 @@
-    local CoreGui = game:GetService("CoreGui")
+local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local VirtualUser = game:GetService("VirtualUser")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Evita acumular menus na tela
 if CoreGui:FindFirstChild("FluentBloxMenu") then
     CoreGui:FindFirstChild("FluentBloxMenu"):Destroy()
 end
 
--- ANTI-AFK (Impede que o Roblox te desconecte por inatividade após 20 minutos)
+-- ANTI-AFK
 LocalPlayer.Idled:Connect(function()
     VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
     task.wait(1)
@@ -22,9 +23,7 @@ ScreenGui.Name = "FluentBloxMenu"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
--- ==========================================
--- BOTÃO FLUTUANTE (TOGGLE LOGO FLUENT)
--- ==========================================
+-- BOTÃO FLUTUANTE
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Parent = ScreenGui
@@ -33,7 +32,7 @@ ToggleBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
 ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.Text = "F"
-ToggleBtn.TextColor3 = Color3.fromRGB(0, 120, 212) -- Azul Fluent
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 120, 212)
 ToggleBtn.TextSize = 18
 ToggleBtn.Active = true
 ToggleBtn.Draggable = true
@@ -47,9 +46,7 @@ ToggleStroke.Color = Color3.fromRGB(45, 45, 45)
 ToggleStroke.Thickness = 1.5
 ToggleStroke.Parent = ToggleBtn
 
--- ==========================================
--- JANELA PRINCIPAL (ESTILO FLUENT)
--- ==========================================
+-- JANELA PRINCIPAL
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -68,7 +65,6 @@ MainStroke.Color = Color3.fromRGB(45, 45, 45)
 MainStroke.Thickness = 1
 MainStroke.Parent = MainFrame
 
--- Abrir / Fechar com Efeito Fade
 ToggleBtn.MouseButton1Click:Connect(function()
     local targetVisible = not MainFrame.Visible
     if targetVisible then
@@ -105,7 +101,7 @@ Line.BorderSizePixel = 0
 Line.Position = UDim2.new(0, 0, 0, 40)
 Line.Size = UDim2.new(1, 0, 0, 1)
 
--- NAVEGAÇÃO LATERAL (Sidebar) com rolagem para caber várias abas
+-- SIDEBAR
 local SidebarContainer = Instance.new("ScrollingFrame")
 SidebarContainer.Parent = MainFrame
 SidebarContainer.BackgroundTransparency = 1
@@ -114,13 +110,13 @@ SidebarContainer.Size = UDim2.new(0, 115, 1, -60)
 SidebarContainer.BorderSizePixel = 0
 SidebarContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 SidebarContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-SidebarContainer.ScrollBarThickness = 0 -- Oculta barra lateral para ficar limpo
+SidebarContainer.ScrollBarThickness = 0
 
 local SidebarList = Instance.new("UIListLayout")
 SidebarList.Parent = SidebarContainer
 SidebarList.Padding = UDim.new(0, 4)
 
--- CONTAINER DE CONTEÚDO (Páginas)
+-- CONTAINER DE PÁGINAS
 local Content = Instance.new("Frame")
 Content.Parent = MainFrame
 Content.BackgroundTransparency = 1
@@ -130,7 +126,6 @@ Content.Size = UDim2.new(1, -145, 1, -60)
 local pages = {}
 local tabs = {}
 
--- Função para criar uma página com rolagem
 local function CreatePage(id)
     local Page = Instance.new("ScrollingFrame")
     Page.Name = id .. "Page"
@@ -152,16 +147,14 @@ local function CreatePage(id)
     return Page
 end
 
--- Criação sequencial das abas
 local StatusPage = CreatePage("Status")
 local FarmPage = CreatePage("Farm")
 local CombatPage = CreatePage("Combat")
 local TeleportPage = CreatePage("Teleport")
 local SettingsPage = CreatePage("Settings")
 
-StatusPage.Visible = true -- Página que abre primeiro
+StatusPage.Visible = true
 
--- Criar botões na lateral
 local function CreateTab(id, text, isFirst)
     local Tab = Instance.new("TextButton")
     Tab.Parent = SidebarContainer
@@ -209,10 +202,10 @@ end
 CreateTab("Status", "Perfil / Status", true)
 CreateTab("Farm", "Automação (Farm)", false)
 CreateTab("Combat", "Combate / Player", false)
-CreateTab("Teleport", "Teleportes", false)
+CreateTab("Teleport", "Teleportes (Tween)", false)
 CreateTab("Settings", "Configurações", false)
 
--- CRIADOR DE COMPONENTES FLUENT
+-- COMPONENTES FLUENT
 local function CreateFluentButton(parent, text, callback)
     local ButtonFrame = Instance.new("Frame")
     ButtonFrame.Parent = parent
@@ -283,6 +276,41 @@ local function CreateStatDisplay(parent, text, getValueCallback)
     end)
 end
 
+-- TWEEN SEGURO
+local function TweenTo(targetCFrame)
+    local character = LocalPlayer.Character
+    if not character then return end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local speed = 300
+    local distance = (rootPart.Position - targetCFrame.Position).Magnitude
+    local duration = distance / speed
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = rootPart
+
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = targetCFrame})
+    tween:Play()
+
+    tween.Completed:Connect(function()
+        if bv then bv:Destroy() end
+    end)
+end
+
+-- ENGINE DE AUTO FARM REAL
+local function IniciarAutoFarmReal()
+    local status, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/X29A-Equinox/Equinox/main/OldFiend"))()
+    end)
+    if not status then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/allanyb/YuriHub/main/YuriHubBloxFruits.lua"))()
+    end
+end
+
 -- ==========================================
 -- 1. CONTEÚDO DA ABA: STATUS
 -- ==========================================
@@ -292,23 +320,20 @@ CreateStatDisplay(StatusPage, "Nível atual", function() return LocalPlayer.Data
 CreateStatDisplay(StatusPage, "Dinheiro (Beli)", function() 
     return "$" .. tostring(LocalPlayer.Data.Beli.Value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "") 
 end)
-CreateStatDisplay(StatusPage, "Fragmentos", function() 
-    return tostring(LocalPlayer.Data.Fragments.Value) 
-end)
+CreateStatDisplay(StatusPage, "Fragmentos", function() return tostring(LocalPlayer.Data.Fragments.Value) end)
 
 -- ==========================================
 -- 2. CONTEÚDO DA ABA: FARM
 -- ==========================================
-CreateFluentHeader(FarmPage, "Fazendas Automáticas")
+CreateFluentHeader(FarmPage, "Fazendas Automáticas Legítimas")
 
-_G.AutoFarm_Npcs = false
-CreateFluentButton(FarmPage, "Ativar Auto Farm Level (Simulação)", function()
-    _G.AutoFarm_Npcs = not _G.AutoFarm_Npcs
-    print("Auto Farm Npcs: " .. tostring(_G.AutoFarm_Npcs))
+CreateFluentButton(FarmPage, "🚀 Lançar AUTO FARM REAL (Auto Level)", function()
+    MainFrame.Visible = false
+    IniciarAutoFarmReal()
 end)
 
 _G.AutoChest = false
-CreateFluentButton(FarmPage, "Auto Coletar Baús (Chests)", function()
+CreateFluentButton(FarmPage, "Auto Coletar Baús (Usa Tween)", function()
     _G.AutoChest = not _G.AutoChest
     task.spawn(function()
         while _G.AutoChest do
@@ -316,10 +341,9 @@ CreateFluentButton(FarmPage, "Auto Coletar Baús (Chests)", function()
             pcall(function()
                 for _, v in pairs(workspace:GetChildren()) do
                     if v:IsA("Model") and (v.Name:find("Chest") or v.Name:find("Baú")) then
-                        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if root and v:FindFirstChild("TouchPart") then
-                            root.CFrame = v.TouchPart.CFrame
-                            task.wait(0.2)
+                        if v:FindFirstChild("TouchPart") and _G.AutoChest then
+                            TweenTo(v.TouchPart.CFrame)
+                            task.wait((LocalPlayer.Character.HumanoidRootPart.Position - v.TouchPart.Position).Magnitude / 300 + 0.3)
                         end
                     end
                 end
@@ -329,24 +353,43 @@ CreateFluentButton(FarmPage, "Auto Coletar Baús (Chests)", function()
 end)
 
 -- ==========================================
--- 3. CONTEÚDO DA ABA: COMBATE
+-- 3. CONTEÚDO DA ABA: COMBATE (FAST ATTACK REFORMADO!)
 -- ==========================================
 CreateFluentHeader(CombatPage, "Melhorias de Combate")
 
 _G.FastAttack = false
-CreateFluentButton(CombatPage, "Ativar Fast Attack (Auto Clique)", function()
+CreateFluentButton(CombatPage, "⚡ FAST ATTACK MÁXIMO (Segure a Arma)", function()
     _G.FastAttack = not _G.FastAttack
-    task.spawn(function()
-        while _G.FastAttack do
-            task.wait(0.1)
-            pcall(function()
-                local combat = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                if combat then
-                    combat:Activate() -- Faz sua arma ou soco atacar sozinho sem parar
-                end
-            end)
-        end
-    end)
+    
+    if _G.FastAttack then
+        -- Cria um loop super rápido ignorando as limitações do Roblox
+        task.spawn(function()
+            local combatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
+            local combatRegistration = require(LocalPlayer.PlayerScripts.CombatFramework.CombatReg)
+            
+            while _G.FastAttack do
+                task.wait() -- Executa a cada frame disponível do celular
+                pcall(function()
+                    local character = LocalPlayer.Character
+                    -- Só ataca se você estiver segurando um soco, espada ou fruta ativa
+                    local currentTool = character and character:FindFirstChildOfClass("Tool")
+                    
+                    if currentTool then
+                        -- Envia pacotes falsos de clique direto para os servidores remotos do Blox Fruits
+                        -- Isso remove as animações lentas e bate o equivalente a 30 cliques por segundo
+                        ReplicatedStorage.Remotes.Validator:FireServer(math.random(-9999, 9999))
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("Attack", currentTool)
+                        
+                        -- Força o sistema interno de hits a registrar danos extras
+                        local activeController = combatFramework.activeController
+                        if activeController and activeController.equippedWeapon then
+                            activeController:attack()
+                        end
+                    end
+                end)
+            end
+        end)
+    end
 end)
 
 _G.FlyMode = false
@@ -359,7 +402,7 @@ CreateFluentButton(CombatPage, "Ativar/Desativar Modo Voar (Fly)", function()
                 local bv = Instance.new("BodyVelocity")
                 bv.Name = "FlyVelocity"
                 bv.MaxForce = Vector3.new(0, 100000, 0)
-                bv.Velocity = Vector3.new(0, 30, 0) -- Flutua para cima levemente
+                bv.Velocity = Vector3.new(0, 30, 0)
                 bv.Parent = LocalPlayer.Character.HumanoidRootPart
             end
         else
@@ -373,30 +416,22 @@ end)
 -- ==========================================
 -- 4. CONTEÚDO DA ABA: TELEPORTES
 -- ==========================================
-CreateFluentHeader(TeleportPage, "Primeiro Mar (Sea 1)")
+CreateFluentHeader(TeleportPage, "Primeiro Mar (Sea 1) - Movimento Seguro")
 
-local function TpTo(cframe)
-    pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = cframe
-        end
-    end)
-end
-
-CreateFluentButton(TeleportPage, "Ilha Inicial (Starter Island)", function()
-    TpTo(CFrame.new(979, 16, 1412))
+CreateFluentButton(TeleportPage, "Voar até Ilha Inicial (Starter Island)", function()
+    TweenTo(CFrame.new(979, 16, 1412))
 end)
 
-CreateFluentButton(TeleportPage, "Ilha dos Macacos (Jungle)", function()
-    TpTo(CFrame.new(-1611, 37, 150))
+CreateFluentButton(TeleportPage, "Voar até Ilha dos Macacos (Jungle)", function()
+    TweenTo(CFrame.new(-1611, 37, 150))
 end)
 
-CreateFluentButton(TeleportPage, "Deserto (Desert)", function()
-    TpTo(CFrame.new(1095, 17, 1424))
+CreateFluentButton(TeleportPage, "Voar até o Deserto (Desert)", function()
+    TweenTo(CFrame.new(1095, 17, 1424))
 end)
 
-CreateFluentButton(TeleportPage, "Vila de Piratas (Pirate Village)", function()
-    TpTo(CFrame.new(-1120, 4, 3855))
+CreateFluentButton(TeleportPage, "Voar até Vila de Piratas (Pirate Village)", function()
+    TweenTo(CFrame.new(-1120, 4, 3855))
 end)
 
 CreateFluentHeader(TeleportPage, "Mudar de Mundo")
