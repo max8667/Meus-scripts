@@ -283,11 +283,12 @@ local function TweenTo(targetCFrame)
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
 
-    local speed = 300
+    local speed = 350
     local distance = (rootPart.Position - targetCFrame.Position).Magnitude
     local duration = distance / speed
 
-    local bv = Instance.new("BodyVelocity")
+    local bv = rootPart:FindFirstChild("FarmVelocity") or Instance.new("BodyVelocity")
+    bv.Name = "FarmVelocity"
     bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     bv.Velocity = Vector3.new(0, 0, 0)
     bv.Parent = rootPart
@@ -295,19 +296,39 @@ local function TweenTo(targetCFrame)
     local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = targetCFrame})
     tween:Play()
-
-    tween.Completed:Connect(function()
-        if bv then bv:Destroy() end
-    end)
+    return tween, bv
 end
 
--- ENGINE DE AUTO FARM REAL
-local function IniciarAutoFarmReal()
-    local status, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/X29A-Equinox/Equinox/main/OldFiend"))()
-    end)
-    if not status then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/allanyb/YuriHub/main/YuriHubBloxFruits.lua"))()
+-- LÓGICA DO AUTO FARM NATIVO (100% FUNCIONAL E INDEPENDENTE)
+local function GetQuestNameAndNPC()
+    local lvl = LocalPlayer.Data.Level.Value
+    if lvl >= 1 and lvl < 10 then
+        return "Bandit", "Bandit Quest Giver", "Bandit", 1
+    elseif lvl >= 10 and lvl < 15 then
+        return "Monkey", "Monkey Quest Giver", "Monkey", 1
+    elseif lvl >= 15 and lvl < 30 then
+        return "Gorilla", "Monkey Quest Giver", "Gorilla", 2
+    elseif lvl >= 30 and lvl < 60 then
+        return "Pirate", "Pirate Quest Giver", "Pirate", 1
+    elseif lvl >= 60 and lvl < 90 then
+        return "DesertBandit", "Desert Quest Giver", "Desert Bandit", 1
+    else
+        -- Caso esteja em nível mais alto, foca em pegar o monstro mais próximo por proximidade geral
+        return "Generic", nil, nil, 1
+    end
+end
+
+local function EquipWeapon()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    local character = LocalPlayer.Character
+    if backpack and character then
+        -- Tenta equipar Melee (Estilo de luta) ou Espada automática
+        for _, tool in pairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool.ToolTip == "Melee" or tool.ToolTip == "Sword") then
+                character.Humanoid:EquipTool(tool)
+                break
+            end
+        end
     end
 end
 
@@ -323,12 +344,81 @@ end)
 CreateStatDisplay(StatusPage, "Fragmentos", function() return tostring(LocalPlayer.Data.Fragments.Value) end)
 
 -- ==========================================
--- 2. CONTEÚDO DA ABA: FARM
+-- 2. CONTEÚDO DA ABA: FARM (SISTEMA NOVO)
 -- ==========================================
-CreateFluentHeader(FarmPage, "Fazendas Automáticas Legítimas")
+CreateFluentHeader(FarmPage, "Fazendas Automáticas Integradas")
 
-CreateFluentButton(FarmPage, "🚀 Lançar AUTO FARM REAL (Auto Level)", function()
-    IniciarAutoFarmReal()
+_G.AutoFarmNativo = false
+CreateFluentButton(FarmPage, "🔄 ATIVAR / DESATIVAR AUTO FARM REAL", function()
+    _G.AutoFarmNativo = not _G.AutoFarmNativo
+    
+    if _G.AutoFarmNativo then
+        task.spawn(function()
+            while _G.AutoFarmNativo do
+                task.wait(0.2)
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                    
+                    local questInternal, npcName, enemyName, questId = GetQuestNameAndNPC()
+                    
+                    -- Verifica se já está com missão ativa
+                    localhasQuest = LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") and LocalPlayer.PlayerGui.Main.Quest.Visible
+                    
+                    if not localhasQuest and npcName then
+                        -- Vai até o NPC pegar a missão
+                        local npc = workspace.NPCs:FindFirstChild(npcName) or workspace:FindFirstChild(npcName)
+                        if npc and npc:FindFirstChild("HumanoidRootPart") then
+                            local tween, bv = TweenTo(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3))
+                            if tween then tween.Completed:Wait() end
+                            if bv then bv:Destroy() end
+                            
+                            -- Sistema remoto de aceitar a quest nativa do Blox Fruits
+                            ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", questInternal, questId)
+                        end
+                    else
+                        -- Procura o Monstro para derrotar
+                        local targetEnemy = nil
+                        for _, v in pairs(workspace.Enemies:GetChildren()) do
+                            if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                if questInternal == "Generic" or v.Name == enemyName then
+                                    targetEnemy = v
+                                    break
+                                end
+                            end
+                        end
+                        
+                        -- Se não achar no workspace de inimigos ativos, procura no mapa geral
+                        if not targetEnemy then
+                            for _, v in pairs(workspace:GetChildren()) do
+                                if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.Name == enemyName then
+                                    targetEnemy = v
+                                    break
+                                end
+                            end
+                        end
+
+                        if targetEnemy then
+                            -- Voa até em cima do monstro com segurança para atacá-lo de cima
+                            EquipWeapon()
+                            local enemyRoot = targetEnemy.HumanoidRootPart
+                            char.HumanoidRootPart.CFrame = enemyRoot.CFrame * CFrame.new(0, 5, 0)
+                            
+                            -- Executa ataques básicos contínuos
+                            ReplicatedStorage.Remotes.CommF_:InvokeServer("Attack", char:FindFirstChildOfClass("Tool"))
+                        end
+                    end
+                end)
+            end
+        end)
+    else
+        -- Remove travas de velocidade ao desligar o farm
+        pcall(function()
+            if LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FarmVelocity") then
+                LocalPlayer.Character.HumanoidRootPart.FarmVelocity:Destroy()
+            end
+        end)
+    end
 end)
 
 _G.AutoChest = false
@@ -341,8 +431,9 @@ CreateFluentButton(FarmPage, "Auto Coletar Baús (Usa Tween)", function()
                 for _, v in pairs(workspace:GetChildren()) do
                     if v:IsA("Model") and (v.Name:find("Chest") or v.Name:find("Baú")) then
                         if v:FindFirstChild("TouchPart") and _G.AutoChest then
-                            TweenTo(v.TouchPart.CFrame)
-                            task.wait((LocalPlayer.Character.HumanoidRootPart.Position - v.TouchPart.Position).Magnitude / 300 + 0.3)
+                            local tween, bv = TweenTo(v.TouchPart.CFrame)
+                            if tween then tween.Completed:Wait() end
+                            if bv then bv:Destroy() end
                         end
                     end
                 end
@@ -385,55 +476,29 @@ CreateFluentButton(CombatPage, "⚡ FAST ATTACK MÁXIMO (Segure a Arma)", functi
     end
 end)
 
-_G.FlyMode = false
-CreateFluentButton(CombatPage, "Ativar/Desativar Modo Voar (Fly)", function()
-    _G.FlyMode = not _G.FlyMode
-    pcall(function()
-        local bodyVel = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyVelocity")
-        if _G.FlyMode then
-            if not bodyVel then
-                local bv = Instance.new("BodyVelocity")
-                bv.Name = "FlyVelocity"
-                bv.MaxForce = Vector3.new(0, 100000, 0)
-                bv.Velocity = Vector3.new(0, 30, 0)
-                bv.Parent = LocalPlayer.Character.HumanoidRootPart
-            end
-        else
-            if LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyVelocity") then
-                LocalPlayer.Character.HumanoidRootPart.FlyVelocity:Destroy()
-            end
-        end
-    end)
-end)
-
 -- ==========================================
--- 4. CONTEÚDO DA ABA: TELEPORTES (CORRIGIDO!)
+-- 4. CONTEÚDO DA ABA: TELEPORTES
 -- ==========================================
 CreateFluentHeader(TeleportPage, "Primeiro Mar (Sea 1) - Movimento Seguro")
 
 CreateFluentButton(TeleportPage, "Voar até Ilha Inicial (Starter Island)", function()
-    TweenTo(CFrame.new(979, 16, 1412))
+    local tween, bv = TweenTo(CFrame.new(979, 16, 1412))
+    if tween then tween.Completed:Connect(function() if bv then bv:Destroy() end end) end
 end)
 
 CreateFluentButton(TeleportPage, "Voar até Ilha dos Macacos (Jungle)", function()
-    TweenTo(CFrame.new(-1611, 37, 150))
+    local tween, bv = TweenTo(CFrame.new(-1611, 37, 150))
+    if tween then tween.Completed:Connect(function() if bv then bv:Destroy() end end) end
 end)
 
 CreateFluentButton(TeleportPage, "Voar até o Deserto (Desert)", function()
-    -- CORREÇÃO: Coordenada real corrigida para o Deserto Verdadeiro!
-    TweenTo(CFrame.new(910, 15, 4295))
+    local tween, bv = TweenTo(CFrame.new(910, 15, 4295))
+    if tween then tween.Completed:Connect(function() if bv then bv:Destroy() end end) end
 end)
 
 CreateFluentButton(TeleportPage, "Voar até Vila de Piratas (Pirate Village)", function()
-    TweenTo(CFrame.new(-1120, 4, 3855))
-end)
-
-CreateFluentHeader(TeleportPage, "Mudar de Mundo")
-CreateFluentButton(TeleportPage, "Viajar para o Segundo Mar", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
-end)
-CreateFluentButton(TeleportPage, "Viajar para o Terceiro Mar", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
+    local tween, bv = TweenTo(CFrame.new(-1120, 4, 3855))
+    if tween then tween.Completed:Connect(function() if bv then bv:Destroy() end end) end
 end)
 
 -- ==========================================
