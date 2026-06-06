@@ -1,7 +1,6 @@
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
 
 -- Remove menus antigos para não acumular na tela
 if CoreGui:FindFirstChild("MenuBloxFruitsV2") then
@@ -18,8 +17,8 @@ local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -110)
+MainFrame.Size = UDim2.new(0, 360, 0, 220)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -31,7 +30,7 @@ MainCorner.Parent = MainFrame
 local TitleBar = Instance.new("Frame")
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
@@ -40,31 +39,31 @@ TitleCorner.Parent = TitleBar
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Parent = TitleBar
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-TitleLabel.Size = UDim2.new(1, -30, 1, 0)
+TitleLabel.Position = UDim2.new(0, 12, 0, 0)
+TitleLabel.Size = UDim2.new(1, -24, 1, 0)
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.Text = "Blox Fruits Helper v2"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 14
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- SIDEBAR (Abas Laterais)
 local Sidebar = Instance.new("Frame")
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-Sidebar.Position = UDim2.new(0, 0, 0, 40)
-Sidebar.Size = UDim2.new(0, 120, 1, -40)
+Sidebar.Position = UDim2.new(0, 0, 0, 35)
+Sidebar.Size = UDim2.new(0, 100, 1, -35)
 
 local SidebarList = Instance.new("UIListLayout")
 SidebarList.Parent = Sidebar
-SidebarList.Padding = UDim.new(0, 5)
+SidebarList.Padding = UDim.new(0, 4)
 
 -- CONTAINER DE CONTEÚDO
 local Content = Instance.new("Frame")
 Content.Parent = MainFrame
 Content.BackgroundTransparency = 1
-Content.Position = UDim2.new(0, 130, 0, 50)
-Content.Size = UDim2.new(1, -140, 1, -60)
+Content.Position = UDim2.new(0, 110, 0, 45)
+Content.Size = UDim2.new(1, -120, 1, -55)
 
 -- Função para Criar Páginas
 local function CreatePage()
@@ -76,7 +75,7 @@ local function CreatePage()
     
     local List = Instance.new("UIListLayout")
     List.Parent = Page
-    List.Padding = UDim.new(0, 10)
+    List.Padding = UDim.new(0, 8)
     
     return Page
 end
@@ -90,11 +89,11 @@ local function CreateTab(text, page)
     local Tab = Instance.new("TextButton")
     Tab.Parent = Sidebar
     Tab.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    Tab.Size = UDim2.new(1, -10, 0, 35)
+    Tab.Size = UDim2.new(1, -8, 0, 30)
     Tab.Font = Enum.Font.Gotham
     Tab.Text = text
     Tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Tab.TextSize = 14
+    Tab.TextSize = 12
     
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 5)
@@ -115,11 +114,11 @@ local function CreateButton(parent, text, callback)
     local Btn = Instance.new("TextButton")
     Btn.Parent = parent
     Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    Btn.Size = UDim2.new(1, -10, 0, 40)
+    Btn.Size = UDim2.new(1, -5, 0, 35)
     Btn.Font = Enum.Font.GothamSemibold
     Btn.Text = text
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.TextSize = 14
+    Btn.TextSize = 12
     
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 5)
@@ -132,15 +131,15 @@ end
 local FarmTitle = Instance.new("TextLabel")
 FarmTitle.Parent = FarmPage
 FarmTitle.BackgroundTransparency = 1
-FarmTitle.Size = UDim2.new(1, 0, 0, 20)
+FarmTitle.Size = UDim2.new(1, 0, 0, 18)
 FarmTitle.Font = Enum.Font.GothamBold
 FarmTitle.Text = "Opções de Farm"
 FarmTitle.TextColor3 = Color3.fromRGB(150, 150, 250)
-FarmTitle.TextSize = 14
+FarmTitle.TextSize = 12
 FarmTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-local _G.AutoFarm = false
-CreateButton(FarmPage, "Ativar Auto Farm (Aviso no Console)", function()
+_G.AutoFarm = false -- CORRIGIDO AQUI (Removido o 'local')
+CreateButton(FarmPage, "Ativar Auto Farm (Teste)", function()
     _G.AutoFarm = not _G.AutoFarm
     print("Estado do AutoFarm alterado para: " .. tostring(_G.AutoFarm))
 end)
@@ -149,21 +148,21 @@ end)
 local TeleportTitle = Instance.new("TextLabel")
 TeleportTitle.Parent = TeleportPage
 TeleportTitle.BackgroundTransparency = 1
-TeleportTitle.Size = UDim2.new(1, 0, 0, 20)
+TeleportTitle.Size = UDim2.new(1, 0, 0, 18)
 TeleportTitle.Font = Enum.Font.GothamBold
 TeleportTitle.Text = "Teleportar (Primeiro Mar)"
 TeleportTitle.TextColor3 = Color3.fromRGB(150, 150, 250)
-TeleportTitle.TextSize = 14
+TeleportTitle.TextSize = 12
 TeleportTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-CreateButton(TeleportPage, "Teleportar para Selva (Jungle)", function()
+CreateButton(TeleportPage, "Ir para Selva (Jungle)", function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         char.HumanoidRootPart.CFrame = CFrame.new(-1611, 37, 150)
     end
 end)
 
-CreateButton(TeleportPage, "Teleportar para Deserto (Desert)", function()
+CreateButton(TeleportPage, "Ir para Deserto (Desert)", function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         char.HumanoidRootPart.CFrame = CFrame.new(1095, 17, 1424)
